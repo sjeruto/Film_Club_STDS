@@ -1,4 +1,3 @@
-#test
 #load packages
 library(httr)
 library(tidyverse)
@@ -39,12 +38,11 @@ movie2 <- pivot_wider(movie2, id_cols=NULL, names_from=newColName, values_from=2
 tmdb <- smartbind(movie, movie2)
 
 ## range
-start = 1
-end = 100000
+start = 114805
+end = 199999
 
 
-
-for (i in start:end {
+for (i in start:end) {
   get_movie <- GET(paste0(url, as.character(i), "?api_key=", api_key))
   movie <- content(get_movie, "parse")
   movie <- as.matrix(unlist(movie))
@@ -72,12 +70,57 @@ df <- tmdb %>%
 df <- df %>%
   filter(! is.na(imdb_id))
 
-## add a dummy variable for year
-df$year <- year(df$release_date)
 
 ## write to csv update the record
-raw <- paste0("tmdb ",start,"-",end," range.csv")
+raw <- paste0("tmdb raw ",start,"-",end," range.csv")
+clean <- paste0("tmdb clean ",start,"-",end," range.csv")
 
 write.csv(tmdb, raw)
-write.csv(test, 'tmdb_100000.csv')
+write.csv(df, clean)
 
+
+
+## country ratio
+country <- df %>%
+  select(production_countries.name, genres.name, original_title) %>%
+  group_by(production_countries.name, genres.name) %>%
+  summarise(n = n())
+
+## country ratio
+df$release_date[df$release_date == ""] <- NA
+df$year <- year(df$release_date)
+
+country <- df %>%
+  filter(year > 2010)
+
+country <- country %>%
+  select(production_countries.name, genres.name, original_title) %>%
+  group_by(production_countries.name, genres.name) %>%
+  summarise(n = n())
+
+country_pivot <- pivot_wider(country
+            ,id_cols = production_countries.name
+            ,names_from = genres.name
+            ,values_from = n)
+
+country_pivot$total <- rowSums(country_pivot[,-1], na.rm=TRUE)
+
+country_pivot <- pivot_longer(country_pivot,
+                              cols = -c(production_countries.name|total),
+                              names_to = "genre",
+                              values_to = "value")
+
+country_pivot$total[is.na(country_pivot$total)] <- 0
+country_pivot$value[is.na(country_pivot$value)] <- 0
+
+country_pivot <- country_pivot %>% filter(total > 50)
+
+country_pivot$perc <- round((country_pivot$value /country_pivot$total * 100), 2)
+
+country_pivot <- country_pivot %>%
+  select(production_countries.name, genre, perc)
+
+country_pivot <- pivot_wider(country_pivot
+                             ,id_cols = production_countries.name
+                             ,names_from = genre
+                             ,values_from = perc)
