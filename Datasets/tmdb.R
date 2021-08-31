@@ -38,7 +38,7 @@ movie2 <- pivot_wider(movie2, id_cols=NULL, names_from=newColName, values_from=2
 tmdb <- smartbind(movie, movie2)
 
 ## range
-start = 114805
+start = 126120
 end = 199999
 
 
