@@ -65,3 +65,4 @@ country_pivot <- pivot_wider(country_pivot
                              ,id_cols = production_countries.name
                              ,names_from = genre
                              ,values_from = perc)
+
