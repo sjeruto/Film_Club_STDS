@@ -85,4 +85,4 @@ clean_country <- data.frame(lapply(clean_country, function(x) {
 tmdbjoined <- left_join(tmdb, clean_country, by= c("production_countries.name" = "country"))
 
 #join country_data with tmdb
-tmdbjoined <- left_join(tmdb, survey_joined, by= c("production_countries.name" = "country"))
+tmdbjoined <- inner_join(tmdbjoined, survey_joined, by= c("production_countries.name" = "country"))
