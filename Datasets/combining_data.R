@@ -38,7 +38,11 @@ tenyears <- combined %>%
 
 #select relevant data
 tmdb <- tenyears %>%
-  select(production_countries.name, original_language, budget, genres.name)
+  select(production_countries.name
+         ,original_language
+         ,budget
+         ,genres.name
+         ,adult)
 
 #drop NA values
 tmdb <- na.omit(tmdb)
@@ -50,6 +54,7 @@ gender_pivot <- pivot_wider(gender
                              ,id_cols = country
                              ,names_from = GENDER_EQUALITY
                              ,values_from = weighted_n)
+names(gender_pivot) <- c("country", "gender_VI", "gender_SI", "gender_NTI", "gender_NIAA", "gender_DK", "gender_R")
 
 #pivot wider the survey responses
 lgbtqi <- file8 %>%
@@ -58,6 +63,7 @@ lgbtqi_pivot <- pivot_wider(lgbtqi
                             ,id_cols = country
                             ,names_from = HOMOSEXUALITY
                             ,values_from = weighted_n)
+names(lgbtqi_pivot) <- c("country", "lgbtqi_Y", "lgbtqi_N", "lgbtqi_DK", "lgbtqi_R")
 
 #pivot wider the survey responses
 religion <- file9 %>%
@@ -66,6 +72,8 @@ religion_pivot <- pivot_wider(religion
                             ,id_cols = country
                             ,names_from = RELIGION_IMPORT
                             ,values_from = weighted_n)
+names(religion_pivot) <- c("country", "religion_VI", "religion_SI", "religion_NTI", "religion_NIAA", "religion_DK", "religion_R")
+
 #survey questions joined
 survey_joined <- left_join(gender_pivot, lgbtqi_pivot, by= "country")
 survey_joined <- left_join(survey_joined, religion_pivot, by= "country")
@@ -78,7 +86,13 @@ clean_country <- data.frame(lapply(Country_Data, function(x) {
   gsub("United States", "United States of America", x)
 }))
 clean_country <- data.frame(lapply(clean_country, function(x) {
-  gsub("Slovak Replublic", "Slovakia", x)
+  gsub("Slovak Republic", "Slovakia", x)
+}))
+clean_country <- data.frame(lapply(clean_country, function(x) {
+  gsub("Korea, Rep.", "South Korea", x)
+}))
+clean_country <- data.frame(lapply(clean_country, function(x) {
+  gsub("Russian Federation", "Russia", x)
 }))
 
 #join country_data with tmdb
