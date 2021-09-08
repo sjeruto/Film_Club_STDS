@@ -100,3 +100,6 @@ tmdbjoined <- left_join(tmdb, clean_country, by= c("production_countries.name" =
 
 #join country_data with tmdb
 tmdbjoined <- inner_join(tmdbjoined, survey_joined, by= c("production_countries.name" = "country"))
+
+## write to csv
+write.csv(tmdbjoined, "tmdbjoined.csv")
