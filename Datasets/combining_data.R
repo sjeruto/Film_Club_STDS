@@ -103,3 +103,15 @@ tmdbjoined <- inner_join(tmdbjoined, survey_joined, by= c("production_countries.
 
 ## write to csv
 write.csv(tmdbjoined, "tmdbjoined.csv")
+
+#create a dummy variable
+mature <- c("Action", "Crime", "Thriller", "Horror", "War")
+tmdbdummy <- tmdbjoined %>%
+  mutate(dummy = ifelse(genres.name %in% mature, 1, 0))
+
+tmdbdummy$genres.name <- NULL
+tmdbdummy$adult <- NULL
+
+
+## write to csv
+write.csv(tmdbdummy, "tmdbdummy.csv")
