@@ -1,4 +1,5 @@
 library(tidyverse)
+library(corrplot)
 
 #import the tmdb files
 tmdbdummy <- read.csv('tmdbdummy.csv')
