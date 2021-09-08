@@ -1,24 +1,26 @@
 library(tidyverse)
 
 #import the tmdb files
-tmdbjoined <- read.csv('tmdbjoined.csv')
+tmdbdummy <- read.csv('tmdbdummy.csv')
 
-data <- tmdbjoined %>% select(
-  genres.name
+data <- tmdbdummy %>% select(
+  dummy
   ,production_countries.name
   ,original_language
   ,income_level
   ,budget
-  ,gender_VI
-  ,gender_SI
-  ,gender_NTI
-  ,gender_NIAA
-  ,gender_DK
-  ,gender_R)
+  ,gender_Y
+  ,gender_N  
+  ,gender_Neut
+  ,lgbtqi_Y
+  ,lgbtqi_N
+  ,lgbtqi_Neut
+  ,religion_Y
+  ,religion_N
+  ,religion_Neut)
 
-#convert adult to binary
-levels(data$genres.name)
 
-
-glm1 = glm(adult ~ production_countries.name + gender_VI, family = binomial(logit), data = data)
+glm1 = glm(dummy ~ . -production_countries.name -original_language, family = binomial(logit), data = data, na.action = na.exclude)
 summary(glm1)
+
+

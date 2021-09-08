@@ -104,13 +104,44 @@ tmdbjoined <- inner_join(tmdbjoined, survey_joined, by= c("production_countries.
 ## write to csv
 write.csv(tmdbjoined, "tmdbjoined.csv")
 
-#create a dummy variable
+#create a dummy variable for 
 mature <- c("Action", "Crime", "Thriller", "Horror", "War")
 tmdbdummy <- tmdbjoined %>%
   mutate(dummy = ifelse(genres.name %in% mature, 1, 0))
 
 tmdbdummy$genres.name <- NULL
 tmdbdummy$adult <- NULL
+
+#combine "Don't Know" & "Refused" to answer for all culture questions
+tmdbdummy$gender_Neut <- (tmdbdummy$gender_DK + tmdbdummy$gender_R)
+tmdbdummy$lgbtqi_Neut <- (tmdbdummy$lgbtqi_DK + tmdbdummy$lgbtqi_R)
+tmdbdummy$religion_Neut <- (tmdbdummy$religion_DK + tmdbdummy$religion_R)
+
+tmdbdummy$gender_DK <- NULL
+tmdbdummy$gender_R <- NULL
+tmdbdummy$lgbtqi_DK <- NULL
+tmdbdummy$lgbtqi_R <- NULL
+tmdbdummy$religion_DK <- NULL
+tmdbdummy$religion_R <- NULL
+
+
+#combine "Very Important" & "Somewhat Important" to answer for all culture questions
+tmdbdummy$gender_Y <- (tmdbdummy$gender_VI + tmdbdummy$gender_SI)
+tmdbdummy$religion_Y <- (tmdbdummy$religion_VI + tmdbdummy$religion_SI)
+
+tmdbdummy$gender_VI <- NULL
+tmdbdummy$gender_SI <- NULL
+tmdbdummy$religion_VI <- NULL
+tmdbdummy$religion_SI <- NULL
+
+#combine "Very Important" & "Somewhat Important" to answer for all culture questions
+tmdbdummy$gender_N <- (tmdbdummy$gender_NTI + tmdbdummy$gender_NIAA)
+tmdbdummy$religion_N <- (tmdbdummy$religion_NTI + tmdbdummy$religion_NIAA)
+
+tmdbdummy$gender_NTI <- NULL
+tmdbdummy$gender_NIAA <- NULL
+tmdbdummy$religion_NTI <- NULL
+tmdbdummy$religion_NIAA <- NULL
 
 
 ## write to csv
