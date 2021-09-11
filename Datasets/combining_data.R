@@ -3,6 +3,8 @@ library(tidyverse)
 library(wbstats)
 library(lubridate)
 library(stringr)
+require(likert)
+data("pisaitems")
 
 #import the tmdb files
 file1 <- read.csv('tmdb clean 1-126118 range.csv')
