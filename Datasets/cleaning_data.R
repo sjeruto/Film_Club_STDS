@@ -66,3 +66,14 @@ country_pivot <- pivot_wider(country_pivot
                              ,names_from = genre
                              ,values_from = perc)
 
+country_perc <- pivot_longer(country_pivot,
+                              cols = -(production_countries.name),
+                              names_to = "genre",
+                              values_to = "value")
+
+#plot heatmap of country genre popularity
+ggplot(country_perc, aes(production_countries.name, genre, fill=value)) +
+  geom_tile() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none") +
+  ggtitle("Country genre popularity") +
+  scale_fill_gradient(low="white", high="blue")

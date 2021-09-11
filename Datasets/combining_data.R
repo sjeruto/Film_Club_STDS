@@ -2,6 +2,7 @@
 library(tidyverse)
 library(wbstats)
 library(lubridate)
+library(stringr)
 
 #import the tmdb files
 file1 <- read.csv('tmdb clean 1-126118 range.csv')
@@ -79,9 +80,7 @@ survey_joined <- left_join(gender_pivot, lgbtqi_pivot, by= "country")
 survey_joined <- left_join(survey_joined, religion_pivot, by= "country")
 
 #convert country names to match for join
-survey_joined <- data.frame(lapply(survey_joined, function(x) {
-  gsub("United States", "United States of America", x)
-}))
+survey_joined$country <- str_replace(survey_joined$country, "United States", "United States of America")
 clean_country <- data.frame(lapply(Country_Data, function(x) {
   gsub("United States", "United States of America", x)
 }))
@@ -95,6 +94,7 @@ clean_country <- data.frame(lapply(clean_country, function(x) {
   gsub("Russian Federation", "Russia", x)
 }))
 
+
 #join country_data with tmdb
 tmdbjoined <- left_join(tmdb, clean_country, by= c("production_countries.name" = "country"))
 
@@ -107,7 +107,7 @@ write.csv(tmdbjoined, "tmdbjoined.csv")
 #create a dummy variable for 
 mature <- c("Action", "Crime", "Thriller", "Horror", "War")
 tmdbdummy <- tmdbjoined %>%
-  mutate(dummy = ifelse(genres.name %in% mature, 1, 0))
+  mutate(mature = ifelse(genres.name %in% mature, 1, 0))
 
 tmdbdummy$genres.name <- NULL
 tmdbdummy$adult <- NULL
@@ -146,3 +146,4 @@ tmdbdummy$religion_NIAA <- NULL
 
 ## write to csv
 write.csv(tmdbdummy, "tmdbdummy.csv")
+write.csv(combined, "combined.csv")
