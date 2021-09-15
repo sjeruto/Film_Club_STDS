@@ -33,10 +33,13 @@ ggplot(combined, aes(budget, vote_average, colour = genres.name)) +
   geom_point() +
   ggtitle("budget vs average vote")
 
-#plot budget vs revenue
-ggplot(combined, aes(revenue, budget, colour = genres.name)) + 
+#plot budget vs profit
+no_nas <- na.omit(combined)
+no_nas <- no_nas %>%
+  filter(budget > 0 | revenue > 0)
+ggplot(no_nas, aes(budget, (revenue-budget), colour = genres.name)) + 
   geom_point()+
-  ggtitle("budget vs revenue")
+  ggtitle("budget vs profit")
 
 #all genres separately
 for (var in unique(combined$genres.name)) {
