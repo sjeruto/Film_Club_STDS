@@ -71,9 +71,23 @@ country_perc <- pivot_longer(country_pivot,
                               names_to = "genre",
                               values_to = "value")
 
+country_perc <- country_perc %>%
+  filter(production_countries.name %in% countries)
+
+country_perc <- country_perc %>%
+  filter(genre != "NA")
+
+
+
 #plot heatmap of country genre popularity
 ggplot(country_perc, aes(production_countries.name, genre, fill=value)) +
   geom_tile() +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1), legend.position="none") +
-  ggtitle("Country genre popularity") +
-  scale_fill_gradient(low="white", high="blue")
+  ggtitle("Genre Popularity by Country
+          ") +
+  xlab("") + 
+  ylab("")+
+  theme(text=element_text(size=14,family="CM Roman"))+
+  scale_fill_gradient(low="white", high="navy")
+  
+

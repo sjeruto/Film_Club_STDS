@@ -9,6 +9,7 @@ library(DataExplorer) # plot_str()
 library(plotly)       # ggplotly(), plot_ly()
 library(dummies)      # creating dummy variables
 library(likert)
+library(scales)
 
 #import
 combined <- read.csv('combined.csv')
@@ -29,9 +30,38 @@ table(tmdbdummy$mature)
 
 
 #plot budget vs vote_avg.
-ggplot(combined, aes(budget, vote_average, colour = genres.name)) + 
-  geom_point() +
-  ggtitle("budget vs average vote")
+combined$avg <- ifelse(combined$budget > 13000000 & combined$vote_average < 5.4, "0", "1")
+combined <- combined %>%
+  filter(budget > 0 & revenue > 0)
+
+ggplot(combined, aes(budget, vote_average, color = avg)) + 
+  geom_point(alpha = 2/10) +
+  scale_color_manual(values=c('darkred','navy'))+
+  theme_minimal()+
+  ggtitle("Budget vs. Rating")+
+  xlab("Budget") + 
+  ylab("Rating")+
+  scale_x_continuous(labels = unit_format(unit = "M", scale = 1e-6))+
+  theme(text=element_text(size=14,family="CM Roman"),  legend.position="none")
+
+  
+#plot budget vs vote_avg.
+combined$profit <- (combined$revenue - combined$budget)
+combined$profitable <- ifelse(combined$profit < 0, "0", "1")
+combined <- combined %>%
+  filter(budget > 0 & revenue > 0)
+
+ggplot(combined, aes(budget, profit, color = profitable)) + 
+  geom_point(alpha = 2/10) +
+  scale_color_manual(values=c('darkred','navy'))+
+  theme_minimal()+
+  ggtitle("Budget vs. Profit")+
+  xlab("Budget") + 
+  ylab("Profit")+
+  scale_x_continuous(labels = unit_format(unit = "M", scale = 1e-6))+
+  scale_y_continuous(labels = unit_format(unit = "M", scale = 1e-6))+
+  theme(text=element_text(size=14,family="CM Roman"),  legend.position="none")
+
 
 #plot budget vs profit
 no_nas <- na.omit(combined)
@@ -78,4 +108,3 @@ ggplot(tmdbdummy, aes(lgbtqi_Y, religion_Y)) +
 ggplot(tmdbdummy, aes(gender_Y, religion_Y)) + 
   geom_point()+
   ggtitle("Progressive across gender & religion")
-

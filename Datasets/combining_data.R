@@ -147,5 +147,8 @@ tmdbdummy$religion_NIAA <- NULL
 
 
 ## write to csv
-write.csv(tmdbdummy, "tmdbdummy.csv")
+write.csv(tmdbdummy, "tmdb_individual.csv")
 write.csv(combined, "combined.csv")
+
+#unique countries
+countries <- unique(tmdbdummy$production_countries.name)
