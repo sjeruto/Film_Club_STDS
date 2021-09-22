@@ -10,7 +10,7 @@ library(stringr)
 require(likert)
 ```
 # Load data 
-df_GE <- read.csv("/Users/sharon1/Desktop/FILM_CLUB_STDS/Film_Club_STDS/Datasets/GENDER_EQUALITY.csv")
+df_GE <- read.csv("GENDER_EQUALITY.csv")
 df_GE
 
 ## checking the structure of data
@@ -26,7 +26,7 @@ mpya <- merge (df_GE, new_df)
 Gender_df <- mpya[,-c(2,3,5,6)]
 
 ########Load lgbtqi data
-df_LGBTQI<- read.csv("/Users/sharon1/Desktop/FILM_CLUB_STDS/Film_Club_STDS/Datasets/HOMOSEXUALITY.csv")
+df_LGBTQI<- read.csv("HOMOSEXUALITY.csv")
 df_LGBTQI
 
 ##
@@ -41,7 +41,7 @@ mpya_1 <- merge (df_LGBTQI, new_df_1)
 LGBTQI_df <- mpya_1[,-c(2,3,5,6)]
 
 ######## Load religioin data
-df_Religion<- read.csv("/Users/sharon1/Desktop/FILM_CLUB_STDS/Film_Club_STDS/Datasets/RELIGION_IMPORT.csv")
+df_Religion<- read.csv("RELIGION_IMPORT.csv")
 df_Religion
 
 ##
@@ -56,6 +56,7 @@ mpya_2 <- merge (df_Religion, new_df_2)
 Religion_df <- mpya_2[,-c(2,3,5,6)]
 
 ####Merge the 3 dataframes;
+tmdb_nolanguage<- read.csv("tmdb_nolanguage.csv")
 
 Merged_df <- merge(merge(Religion_df, LGBTQI_df), Gender_df)
 
@@ -72,8 +73,8 @@ ifelse(n <- sapply(m, function(x) length(levels(x))) == 1, "DROP", "NODROP")
 
 summary(DF_Fy)
 #### Run the logistic regression
-model_glm_1 <- glm(cbind(maturecontent_sum, notmature_sum)~ income_level 
-                 + budget_mean + GENDER_EQUALITY + HOMOSEXUALITY + RELIGION_IMPORT, family=binomial, data=DF_Fy)
+model_glm_1 <- glm(cbind(maturecontent_sum, notmature_sum) ~ income_level 
+                 + budget_mean + HOMOSEXUALITY + RELIGION_IMPORT, family=binomial, data=DF_Fy)
 
 model_glm_1
 summary(model_glm_1)

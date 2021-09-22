@@ -170,3 +170,16 @@ write.csv(combined, "combined.csv")
 
 #unique countries
 countries <- unique(tmdbdummy$production_countries.name)
+
+
+
+
+#plot
+ggplot(tmdb_nolanguage, aes(maturecontent_sum/(maturecontent_sum + notmature_sum), budget_mean)) + 
+  geom_point(alpha = 2/10) +
+  scale_color_manual(values=c('darkred','navy'))+
+  theme_minimal()+
+  ggtitle("mature v budget")+
+  xlab("mature content") + 
+  ylab("budget_mean")+
+  theme(text=element_text(size=14,family="CM Roman"),  legend.position="none")
