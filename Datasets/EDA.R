@@ -42,8 +42,8 @@ ggplot(combined, aes(budget, vote_average, color = avg)) +
   ggtitle("Budget vs. Rating")+
   xlab("Budget") + 
   ylab("Rating")+
-  # scale_x_continuous(labels = dollar)+
-  scale_y_continuous(labels = label_number(accuracy = 0))+
+  scale_x_continuous(labels = dollar)+
+  scale_y_continuous(breaks = c(1,2,3,4,5,6,7,8,9,10), labels = label_number(accuracy = 1))+
   theme(text=element_text(size=14,family="CM Roman"),  legend.position="none")
 
   
