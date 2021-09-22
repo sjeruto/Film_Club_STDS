@@ -16,7 +16,7 @@ combined <- read.csv('combined.csv')
 tmdbdummy <- read.csv('tmdbdummy.csv')
 tmdbdummy$X <- NULL
 
-# Explore structure of csv file
+# Explore structure of csv file----
 str(tmdbdummy)       #variable types look correct, budget looks like lots of 0s
 glimpse(tmdbdummy)   #
 summary(tmdbdummy)   
@@ -29,7 +29,8 @@ nrow(tmdbdummy)
 table(tmdbdummy$mature)
 
 
-#plot budget vs vote_avg.
+#plot budget vs vote_avg.----
+dollar <- label_dollar(prefix = "$", scale = 0.000001, suffix = "M",)
 combined$avg <- ifelse(combined$budget > 13000000 & combined$vote_average < 5.4, "0", "1")
 combined <- combined %>%
   filter(budget > 0 & revenue > 0)
@@ -41,11 +42,14 @@ ggplot(combined, aes(budget, vote_average, color = avg)) +
   ggtitle("Budget vs. Rating")+
   xlab("Budget") + 
   ylab("Rating")+
-  scale_x_continuous(labels = unit_format(unit = "M", scale = 1e-6))+
+  scale_x_continuous(labels = dollar)+
+  scale_y_continuous(breaks = c(1,2,3,4,5,6,7,8,9,10), labels = label_number(accuracy = 1))+
   theme(text=element_text(size=14,family="CM Roman"),  legend.position="none")
 
   
 #plot budget vs vote_avg.
+dollar <- label_dollar(prefix = "$", scale = 0.000001, suffix = "M",)
+
 combined$profit <- (combined$revenue - combined$budget)
 combined$profitable <- ifelse(combined$profit < 0, "0", "1")
 combined <- combined %>%
@@ -58,8 +62,8 @@ ggplot(combined, aes(budget, profit, color = profitable)) +
   ggtitle("Budget vs. Profit")+
   xlab("Budget") + 
   ylab("Profit")+
-  scale_x_continuous(labels = unit_format(unit = "M", scale = 1e-6))+
-  scale_y_continuous(labels = unit_format(unit = "M", scale = 1e-6))+
+  scale_x_continuous(labels = dollar)+
+  scale_y_continuous(labels =dollar)+
   theme(text=element_text(size=14,family="CM Roman"),  legend.position="none")
 
 
