@@ -1,35 +1,35 @@
-"","country","GENDER_EQUALITY"
-"1","Argentina","Very important"
-"2","Australia","Very important"
-"3","Brazil","Very important"
-"4","Bulgaria","Very important"
-"5","Canada","Very important"
-"6","Czech Republic","Very important"
-"7","France","Very important"
-"8","Germany","Very important"
-"9","Greece","Very important"
-"10","Hungary","Very important"
-"11","India","Very important"
-"12","Indonesia","Very important"
-"13","Israel","Very important"
-"14","Italy","Very important"
-"15","Japan","Very important"
-"16","Kenya","Very important"
-"17","Lebanon","Very important"
-"18","Lithuania","Very important"
-"19","Mexico","Very important"
-"20","Netherlands","Very important"
-"21","Nigeria","Very important"
-"22","Philippines","Very important"
-"23","Poland","Very important"
-"24","Russia","Very important"
-"25","Slovakia","Very important"
-"26","South Africa","Very important"
-"27","South Korea","Very important"
-"28","Spain","Very important"
-"29","Sweden","Very important"
-"30","Tunisia","Very important"
-"31","Turkey","Very important"
-"32","Ukraine","Very important"
-"33","United Kingdom","Very important"
-"34","United States","Very important"
+"","country","gender_Neut","gender_Y","gender_N"
+"1","Argentina",2.09069636413507,1011.64795208912,21.2613515467435
+"2","Australia",NA,993.335292879914,15.0264531821457
+"3","Brazil",11.2755406625047,997.631174358032,37.0932849794629
+"4","Bulgaria",9.33376979837354,990.790998404814,44.8752317968131
+"5","Canada",5.63271201127809,988.012366040595,10.3549219481281
+"6","Czech Republic",20.2942209899998,955.784261867012,45.9215171429898
+"7","France",NA,1014.25273993438,12.5614111311233
+"8","Germany",NA,1959.30906715425,51.8020460753651
+"9","Greece",NA,1018.18496275861,20.6234851455548
+"10","Hungary",4.11272676945887,1004.50471319047,21.382560040077
+"11","India",71.8030291192438,2219.85071163016,184.346259250593
+"12","Indonesia",NA,1011.0305758233,146.173037118961
+"13","Israel",5.69906612223367,894.917378917305,73.3835549604611
+"14","Italy",NA,983.723756903176,38.2952618532125
+"15","Japan",13.4735437616568,920.703301414329,102.823154824015
+"16","Kenya",3.35494346993012,732.738153727028,282.906902803039
+"17","Lebanon",NA,911.845831087681,79.0893236150396
+"18","Lithuania",NA,902.615250895558,87.2364863310152
+"19","Mexico",5.76914978531595,985.393697046186,36.8371531684983
+"20","Netherlands",NA,987.919230758099,12.0807692419
+"21","Nigeria",NA,682.832709007223,306.151405882217
+"22","Philippines",NA,977.226796828874,56.0465199559788
+"23","Poland",NA,979.815133494845,44.7654771285396
+"24","Russia",NA,930.770166023489,91.2636086412284
+"25","Slovakia",3.1748664532524,926.913517210676,81.9116163360715
+"26","South Africa",22.0179002467093,1194.86794316523,267.114156588065
+"27","South Korea",5.78748855601313,928.695513407396,71.516998037171
+"28","Spain",NA,1053.62450408374,14.6705606059897
+"29","Sweden",NA,1010.47971206329,5.52028793671193
+"30","Tunisia",20.0466878730579,717.478826424296,307.474485702646
+"31","Turkey",NA,972.873077890584,64.2409828594674
+"32","Ukraine",19.8034899391849,922.298948185099,103.897561875712
+"33","United Kingdom",NA,1003.07011478237,26.3589064722959
+"34","United States",NA,1478.76411022193,18.951357837425

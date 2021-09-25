@@ -85,7 +85,7 @@ tmdb$notmature_mean <- NULL
 tmdb$budget_mean <- round(tmdb$budget_mean / 1000, 2)
 
 #pivot wider the survey responses
-gender <- file7 %>%
+gender <- gender %>%
   select(country, GENDER_EQUALITY, weighted_n)
 gender_pivot <- pivot_wider(gender
                             ,id_cols = country
@@ -94,7 +94,7 @@ gender_pivot <- pivot_wider(gender
 names(gender_pivot) <- c("country", "gender_VI", "gender_SI", "gender_NTI", "gender_NIAA", "gender_DK", "gender_R")
 
 #pivot wider the survey responses
-lgbtqi <- file8 %>%
+lgbtqi <- lgbtqi %>%
   select(country, HOMOSEXUALITY, weighted_n)
 lgbtqi_pivot <- pivot_wider(lgbtqi
                             ,id_cols = country
@@ -103,7 +103,7 @@ lgbtqi_pivot <- pivot_wider(lgbtqi
 names(lgbtqi_pivot) <- c("country", "lgbtqi_Y", "lgbtqi_N", "lgbtqi_DK", "lgbtqi_R")
 
 #pivot wider the survey responses
-religion <- file9 %>%
+religion <- religion %>%
   select(country, RELIGION_IMPORT, weighted_n)
 religion_pivot <- pivot_wider(religion
                               ,id_cols = country
@@ -188,12 +188,15 @@ tmdbjoined$extrapolated_religionY <- tmdbjoined$religion_Y * (tmdbjoined$SP.POP.
 tmdbjoined$per_thousand_religionY <- tmdbjoined$extrapolated_religionY / tmdbjoined$quotient
 
 
-model_glm_3 <- glm(cbind(maturecontent_sum, notmature_sum)~ income_level + budget_mean 
+model_glm_4 <- glm(cbind(maturecontent_sum, notmature_sum)~ budget_mean + income_level
                    + per_thousand_lgbtqiY + per_thousand_genderY + per_thousand_religionY
                    + Ladder.score + Freedom.to.make.life.choices + Logged.GDP.per.capita + Healthy.life.expectancy
                    + Social.support, 
                    family=binomial, data=tmdbjoined)
 
-model_glm_3
+
+summary(model_glm_2)
+summary(model_glm_3)
+summary(model_glm_4)
 
 plot(model_glm_3)
