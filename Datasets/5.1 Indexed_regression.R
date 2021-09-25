@@ -8,6 +8,12 @@ library(wbstats)
 library(lubridate)
 library(stringr)
 require(likert)
+library(car)
+#install.packages("gam")
+library(gam)
+library(mgcv)
+#install.packages("olsrr")
+library(olsrr)
 
 #tmdb data
 tmdb_nolanguage<- read.csv("tmdb_nolanguage.csv")
@@ -15,6 +21,7 @@ tmdb_nolanguage<- read.csv("tmdb_nolanguage.csv")
 #happiness data
 happiness<- read.csv("happiness.csv")
 happiness$ï..Country.name <- str_replace(happiness$ï..Country.name, "United States", "United States of America")
+
 
 #population data
 population <- wb_data("SP.POP.TOTL", start_date = 2020, end_date = 2021)
@@ -148,6 +155,35 @@ New_Religion_LGBTQI_Gender$budget_mean <- round(New_Religion_LGBTQI_Gender$budge
 New_Religion_LGBTQI_Gender$gender_Neut <-NULL
 New_Religion_LGBTQI_Gender$gender_N <-NULL
 New_Religion_LGBTQI_Gender$gender_Y <-NULL
+
+## test for linearity in the continuous variables & logit
+gam_mod <- gam(cbind(maturecontent_sum, notmature_sum) ~ 
+               #s(Ladder.score, bs = 'cr', k = 6) 
+                s(Freedom.to.make.life.choices, bs = 'cr', k = 6)
+               + s(Logged.GDP.per.capita, bs = 'cr', k = 6)
+               #+ s(Healthy.life.expectancy, bs = 'cr', k = 6)
+               + s(Social.support, bs = 'cr', k = 6)
+               + s(budget_mean, bs = 'cr', k = 6)
+               + s(per_thousand_genderY, bs = 'cr', k = 6)
+               , data=New_Religion_LGBTQI_Gender
+               , method = "REML"
+               , family = binomial("logit"))
+
+gam.check(gam_mod)
+plot(gam_mod, pages =1, all.terms = TRUE, residuals = TRUE, pch = 1, cex = 1, shade = TRUE, shade.col = "lightpink", shift = coef(gam_mod)[1])
+summary(gam_mod)
+
+#test for multicollinearity
+cor(New_Religion_LGBTQI_Gender[,c("Freedom.to.make.life.choices","Logged.GDP.per.capita","Social.support", "budget_mean", "per_thousand_genderY")])
+multico<- lm(Freedom.to.make.life.choices ~ Logged.GDP.per.capita + Social.support + budget_mean + per_thousand_genderY, data = New_Religion_LGBTQI_Gender) 
+summary(multico)
+ols_coll_diag(multico)
+
+# Assessing Outliers
+
+outlierTest(fit) # Bonferonni p-value for most extreme obs
+qqPlot(fit, main="QQ Plot") #qq plot for studentized resid
+leveragePlots(fit) # leverage plots
 
 
 #### Run the logistic regression
