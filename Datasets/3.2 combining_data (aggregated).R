@@ -72,7 +72,6 @@ tmdb$maturecontent_mean <- NULL
 tmdb$notmature_mean <- NULL
 
 
-
 #pivot wider the survey responses
 gender <- file7 %>%
   select(country, GENDER_EQUALITY, weighted_n)

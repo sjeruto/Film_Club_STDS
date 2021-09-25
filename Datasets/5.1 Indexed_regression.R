@@ -8,76 +8,111 @@ library(wbstats)
 library(lubridate)
 library(stringr)
 require(likert)
-```
-# Load data 
-df_GE <- read.csv("GENDER_EQUALITY.csv")
-df_GE
 
-## checking the structure of data
-str(df_GE)
+# Load gender data 
+Gender_df<- read.csv("GENDER_EQUALITY.csv")
+Gender_df
+
+
 
 ## SELECT HIGHEST WEIGHTED ESTIMATE
-new_df <- df_GE%>%
-          group_by(country) %>%
-          summarise(weighted_estimate=max(weighted_estimate))
+new_df1 <- Gender_df%>%
+  group_by(country) %>%
+  summarise(weighted_estimate=max(weighted_estimate))
 
-##MERGE
-mpya <- merge (df_GE, new_df)
-Gender_df <- mpya[,-c(2,3,5,6)]
+
+
+### MERGE the two datasets with country as unique identifier
+Gender_New<- merge (Gender_df, new_df1)
+Gender_New <- Gender_New[,-c(2,3,5,6)]
+
+
 
 ########Load lgbtqi data
-df_LGBTQI<- read.csv("HOMOSEXUALITY.csv")
-df_LGBTQI
+LGBTQI_df<- read.csv("HOMOSEXUALITY.csv")
+LGBTQI_df
 
-##
-new_df_1 <- df_LGBTQI%>%
+
+
+## SELECT HIGHEST WEIGHTED ESTIMATE
+new_df2 <- LGBTQI_df%>%
   group_by(country) %>%
   summarise(weighted_estimate=max(weighted_estimate))
 
-##MERGE
-mpya_1 <- merge (df_LGBTQI, new_df_1)
-#Delete column
 
-LGBTQI_df <- mpya_1[,-c(2,3,5,6)]
+
+### MERGE the two datasets with country as unique identifier
+LGBTQI_New<- merge (LGBTQI_df, new_df2)
+LGBTQI_New <- LGBTQI_New[,-c(2,3,5,6)]
+
+
+
 
 ######## Load religioin data
-df_Religion<- read.csv("RELIGION_IMPORT.csv")
-df_Religion
+Religion_df1<- read.csv("RELIGION_IMPORT.csv")
+Religion_df1
 
-##
-new_df_2 <- df_Religion%>%
+
+
+## SELECT HIGHEST WEIGHTED ESTIMATE
+new_df3 <- Religion_df1%>%
   group_by(country) %>%
   summarise(weighted_estimate=max(weighted_estimate))
 
-##MERGE
-mpya_2 <- merge (df_Religion, new_df_2)
 
-####To delete a column
-Religion_df <- mpya_2[,-c(2,3,5,6)]
 
-####Merge the 3 dataframes;
-tmdb_nolanguage<- read.csv("tmdb_nolanguage.csv")
+### MERGE the two datasets with country as unique identifier
+Religion_New<- merge (Religion_df1, new_df3)
+Religion_New <- Religion_New[,-c(2,3,5,6)]
 
-Merged_df <- merge(merge(Religion_df, LGBTQI_df), Gender_df)
 
-New_merged_df <- merge(tmdb_nolanguage,Merged_df)
-
-#Drop columns;
-DF_Fy<- New_merged_df[,-c(1,6,8,9,10,11,12,13,14,15,16,17)]
-
-str(DF_Fy)
-
-(l <- sapply(DF_Fy, function(x) is.factor(x)))
-m <- DF_Fy[, l]
-ifelse(n <- sapply(m, function(x) length(levels(x))) == 1, "DROP", "NODROP")
-
-summary(DF_Fy)
-#### Run the logistic regression
-model_glm_1 <- glm(cbind(maturecontent_sum, notmature_sum) ~ income_level 
-                 + budget_mean + HOMOSEXUALITY + RELIGION_IMPORT, family=binomial, data=DF_Fy)
-
-model_glm_1
-summary(model_glm_1)
 
 ##Write csv
-write.csv(DF_Fy, "Indexed.csv")
+write.csv(Religion_New, "Religion_New.csv")
+write.csv(LGBTQI_New, "LGBTQI_New.csv")
+write.csv(Gender_New, "Gender_New.csv")
+
+
+
+####Merge the 3 dataframes;
+
+
+
+Religion_LGBTQI_Gender <- merge(merge(Religion_New, LGBTQI_New), Gender_New)
+
+#fix country names to match across all datasets
+#convert country names to match for join
+Religion_LGBTQI_Gender$country <- str_replace(Religion_LGBTQI_Gender$country, "United States", "United States of America")
+
+
+
+## Rename column countries to production_countries.name so we can merge the data based on production_countries.name
+Religion_LGBTQI_Gender <- Religion_LGBTQI_Gender %>%
+  rename(production_countries.name = country)
+
+
+
+## Drop columns in the tmdb_nolanguage data
+tmdb_dropped_columns <- tmdb_nolanguage[,-c(1,8,9,10,11,12,13,14,15,16)]
+tmdb_dropped_columns <- tmdb_dropped_columns[,-c(5)]
+
+
+
+
+
+##Final merge data; indexes and tmdb data;
+New_Religion_LGBTQI_Gender <- merge(tmdb_dropped_columns,Religion_LGBTQI_Gender)
+
+## convert budget mean to millions
+New_Religion_LGBTQI_Gender$budget_mean <- round(New_Religion_LGBTQI_Gender$budget_mean / 1000, 2)
+
+
+
+#### Run the logistic regression
+model_glm_2 <- glm(cbind(maturecontent_sum, notmature_sum)~ income_level 
+                   + budget_mean + I(RELIGION_IMPORT) + I(HOMOSEXUALITY), family=binomial, data=New_Religion_LGBTQI_Gender)
+
+
+
+model_glm_2
+
