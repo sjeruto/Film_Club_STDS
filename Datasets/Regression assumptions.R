@@ -172,7 +172,7 @@ happiness$ï..Country.name <- str_replace(happiness$ï..Country.name
                                          , "United States"
                                          , "United States of America")
 
-#-----STEP 6: PREPARE HOFSTEDE DATE                                        ####
+#-----STEP 6: PREPARE HOFSTEDE DATA                                        ####
 #import the happiness data
 hofstede <- read.csv('hofstedes culture dimensions.csv', sep =";", stringsAsFactors = FALSE)
 
@@ -285,6 +285,11 @@ tmdbjoined$total_survey <- (tmdbjoined$gender_Y + tmdbjoined$gender_N + tmdbjoin
 tmdbjoined$SP.POP.TOTL <- as.numeric(as.character(tmdbjoined$SP.POP.TOTL))
 tmdbjoined$extrapolated_genderY <- tmdbjoined$gender_Y * (tmdbjoined$SP.POP.TOTL / tmdbjoined$total_survey)
 
+#remove unneeded responses
+tmdbjoined$gender_Neut <- NULL
+tmdbjoined$gender_N <- NULL
+tmdbjoined$gender_Y <- NULL
+tmdbjoined$total_survey <- NULL
 
 
 #-----STEP 9: CHECK MODEL ASSUMPTIONS                                      ####
@@ -294,37 +299,36 @@ model_glm_4 <- glm(cbind(maturecontent_sum, notmature_sum)~
                      income_level
                    + HOMOSEXUALITY 
                    + RELIGION_IMPORT
-                   #+ extrapolated_genderY - exclude, the score for mas replaces this
+                   + extrapolated_genderY
                    + pdi                                        
-                   + idv                                        
-                   + mas                                       
-                   + uai                                        
+                   #+ idv                                        
+                   #+ mas                                       
+                   #+ uai                                        
                    + ltowvs                                     
                    + ivr
                    #+ Ladder.score - exclude this is made up of the other scores below 
-                   + Freedom.to.make.life.choices 
+                   #+ Freedom.to.make.life.choices 
+                   #+ Generosity
                    #+ Healthy.life.expectancy - exclude this no logical reason why this would play a role
                    #+ Social.support - exclude this social support wouldn't effect movie production unless it related to grants not included here
-                   + Logged.GDP.per.capita
+                   #+ Logged.GDP.per.capita
                    + budget_mean 
                    #+ Generosity - not sure how giving would impact movie production                                 
-                   + Perceptions.of.corruption # could relate to propaganda
-                   + SP.POP.TOTL # country population                             
-                   
+                   #+ Perceptions.of.corruption # could relate to propaganda
+                   #+ SP.POP.TOTL # country population                             
                    ,family=binomial, data=tmdbjoined)
 
 
 summary(model_glm_4)
 
-plot(model_glm_4)
-
+plot(model_glm_4, pages =1, all.terms = TRUE, pch = 1)
 
 # Predict the probability (p) of mature films production
 tmdbjoined$probabilities <- predict(model_glm_4, tmdbjoined, type = "response") ##34 values
-predicted.classes <- ifelse(tmdbjoined$probabilities > 0.2, "pos", "neg")
-head(predicted.classes)
-head(probabilities)
+tmdbjoined$predicted.classes <- ifelse(tmdbjoined$probabilities > 0.2, "pos", "neg")
 
+
+######    To check for linearity
 
 # Select only numeric predictors
 mydata <- tmdbjoined %>%
@@ -344,6 +348,55 @@ ggplot(mydata, aes(logit, predictor.value))+
   facet_wrap(~predictors, scales = "free_y")
 
 
+
+######    To check for multi-collinearity
+
+multico <- na.omit(tmdbjoined)
+
+cor(multico[,c("pdi"                                        
+  ,"idv"                                        
+  , "mas"                                       
+  , "uai"                                        
+  , "ltowvs"                                     
+  , "ivr"
+  #, "Ladder.score" - remove, biproduct of other variables
+  , "Freedom.to.make.life.choices" 
+  , "Healthy.life.expectancy"
+  , "Social.support"
+  #, "Logged.GDP.per.capita" -  remove, multicollinear 
+  , "budget_mean" 
+  , "Generosity"                                
+  , "Perceptions.of.corruption"
+  #, "SP.POP.TOTL" - remove, basis for next variable
+  , "extrapolated_genderY"
+  )])
+
+multico1<- lm(pdi ~ idv + mas + uai + ltowvs + ivr 
+             #+ Ladder.score #- remove, biproduct of other variables
+             + Freedom.to.make.life.choices
+             #+ Healthy.life.expectancy#-  remove, multicollinear 
+             #+ Social.support         #-  remove, multicollinear
+             #+ Logged.GDP.per.capita  #-  remove, multicollinear 
+             + budget_mean
+             + Generosity 
+             + Perceptions.of.corruption 
+             #+ SP.POP.TOTL #- remove, basis for next variable
+             + extrapolated_genderY
+             + RELIGION_IMPORT
+             + income_level
+             + HOMOSEXUALITY
+  , data = multico) 
+
+summary(multico1)
+ols_coll_diag(multico1)
+
+# plot results
+if (require("see")) {
+  x <- check_collinearity(multico1)
+  plot(x)
+}
+
+
 #### ###Influential Values
 #To check for the most extreme values in the data by visualizing the Cooks distance values. 
 #To check for 3 largest values;
@@ -351,7 +404,7 @@ plot(model_glm_4, which = 4, id.n = 3)
 
 #The following R code computes the standardized residuals .std.resid and the Cooks distance .cooksd using the R function augment()
 # Extract model results
-model.data <- augment(c) %>% 
+model.data <- augment(model_glm_4) %>% 
   mutate(index = 1:n()) 
 
 #The data for the top 3 largest values, according to the Cooks distance, 
@@ -360,9 +413,9 @@ model.data %>% top_n(3, .cooksd)
 #Plot the Standardized Residuals:
 ## To do this, we need one dependent variable column; so merge with tmdb_individual data to obtain the mature column;
 
-### MERGE the two datasets with 'production_countries.name' as unique identifier
-Data_New<- merge (New_Religion_LGBTQI_Gender, tmdb_individual)
-Data_New <- Data_New[,-c(21,22,23,24,25,26,28,29,30,31,32,33,34)]
+newdata <- tmdbjoined %>%
+  pivot_longer(tmdbjoined, cols = c(maturecontent_sum, notmature_sum),
+                 names_to = "mature")
 
 # Now, plot
 ggplot(model.data, aes(index, .std.resid)) + 
