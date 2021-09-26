@@ -159,12 +159,12 @@ New_Religion_LGBTQI_Gender$gender_Y <-NULL
 ## test for linearity in the continuous variables & logit
 gam_mod <- gam(cbind(maturecontent_sum, notmature_sum) ~ 
                #s(Ladder.score, bs = 'cr', k = 6) 
-                s(Freedom.to.make.life.choices, bs = 'cr', k = 6)
-               + s(Logged.GDP.per.capita, bs = 'cr', k = 6)
+               s(Freedom.to.make.life.choices, bs = 'cr', k = 5)
+               + s(Logged.GDP.per.capita, bs = 'cr', k = 5)
                #+ s(Healthy.life.expectancy, bs = 'cr', k = 6)
-               + s(Social.support, bs = 'cr', k = 6)
-               + s(budget_mean, bs = 'cr', k = 6)
-               + s(per_thousand_genderY, bs = 'cr', k = 6)
+               + s(Social.support, bs = 'cr', k = 5)
+               + s(budget_mean, bs = 'cr', k = 5)
+               + s(per_thousand_genderY, bs = 'cr', k = 5)
                , data=New_Religion_LGBTQI_Gender
                , method = "REML"
                , family = binomial("logit"))
