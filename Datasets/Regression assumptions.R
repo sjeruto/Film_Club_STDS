@@ -289,28 +289,7 @@ tmdbjoined$extrapolated_genderY <- tmdbjoined$gender_Y * (tmdbjoined$SP.POP.TOTL
 
 #-----STEP 9: CHECK MODEL ASSUMPTIONS                                      ####
 
-## Test for linearity between the continuous variables & log-odds
-gam_mod <- mgcv::gam(cbind(maturecontent_sum, notmature_sum) ~ 
-                 s(pdi, bs = 'cr', k = 3) 
-               + s(idv, bs = 'cr', k = 3) 
-               + s(mas, bs = 'cr', k = 3)
-               + s(uai, bs = 'cr', k = 3) 
-               + s(ltowvs, bs = 'cr', k = 3)
-               + s(ivr, bs = 'cr', k = 3) 
-               + s(Freedom.to.make.life.choices, bs = 'cr', k = 3) 
-               + s(Logged.GDP.per.capita, bs = 'cr', k = 3) 
-               + s(budget_mean, bs = 'cr', k = 3) 
-               + s(SP.POP.TOTL, bs = 'cr', k = 3) 
-               , data=tmdbjoined
-               , method = "REML"
-               , family = binomial("logit"))
-
-gam.check(gam_mod)
-summary(gam_mod)
-plot(gam_mod, pages =1, all.terms = TRUE, residuals = TRUE, pch = 1, cex = 1, shade = TRUE, shade.col = "lightpink", shift = coef(gam_mod)[1])
-
-
-
+#generate the model
 model_glm_4 <- glm(cbind(maturecontent_sum, notmature_sum)~ 
                      income_level
                    + HOMOSEXUALITY 
@@ -337,4 +316,55 @@ model_glm_4 <- glm(cbind(maturecontent_sum, notmature_sum)~
 
 summary(model_glm_4)
 
-plot(model_glm_3)
+plot(model_glm_4)
+
+
+# Predict the probability (p) of mature films production
+tmdbjoined$probabilities <- predict(model_glm_4, tmdbjoined, type = "response") ##34 values
+predicted.classes <- ifelse(tmdbjoined$probabilities > 0.2, "pos", "neg")
+head(predicted.classes)
+head(probabilities)
+
+
+# Select only numeric predictors
+mydata <- tmdbjoined %>%
+  dplyr::select_if(is.numeric) 
+predictors <- colnames(mydata)
+
+# Bind the logit and tidying the data for plot
+mydata <- mydata %>%
+  mutate(logit = log(probabilities/(1-probabilities))) %>%
+  gather(key = "predictors", value = "predictor.value", -logit)
+
+# Create scatter plot
+ggplot(mydata, aes(logit, predictor.value))+
+  geom_point(size = 0.5, alpha = 0.5) +
+  geom_smooth(method = "loess") + 
+  theme_bw() + 
+  facet_wrap(~predictors, scales = "free_y")
+
+
+#### ###Influential Values
+#To check for the most extreme values in the data by visualizing the Cooks distance values. 
+#To check for 3 largest values;
+plot(model_glm_4, which = 4, id.n = 3)
+
+#The following R code computes the standardized residuals .std.resid and the Cooks distance .cooksd using the R function augment()
+# Extract model results
+model.data <- augment(c) %>% 
+  mutate(index = 1:n()) 
+
+#The data for the top 3 largest values, according to the Cooks distance, 
+model.data %>% top_n(3, .cooksd)
+
+#Plot the Standardized Residuals:
+## To do this, we need one dependent variable column; so merge with tmdb_individual data to obtain the mature column;
+
+### MERGE the two datasets with 'production_countries.name' as unique identifier
+Data_New<- merge (New_Religion_LGBTQI_Gender, tmdb_individual)
+Data_New <- Data_New[,-c(21,22,23,24,25,26,28,29,30,31,32,33,34)]
+
+# Now, plot
+ggplot(model.data, aes(index, .std.resid)) + 
+  geom_point(aes(color = mature), alpha = .5) +
+  theme_bw()
