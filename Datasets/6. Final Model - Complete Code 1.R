@@ -87,6 +87,7 @@ tmdb$notmature_mean <- NULL
 # convert budget variable to '000s
 tmdb$budget_mean <- round(tmdb$budget_mean / 1000, 2)
 
+str(tmdb)
 
 
 #-----STEP 3: PREPARE CULTURAL DATA                                        ####
@@ -119,13 +120,31 @@ lgbtqi<- merge (lgbtqi, new_df)
 lgbtqi <- lgbtqi[,-c(2,3,5,6)]
 
 # Select the highest weighted estimate
-new_df <- religion%>%
+# Select the highest weighted estimate
+religion$RELIGION_IMPORT <- replace(religion$RELIGION_IMPORT, religion$RELIGION_IMPORT == "Very important", "Yes")
+religion$RELIGION_IMPORT <- replace(religion$RELIGION_IMPORT, religion$RELIGION_IMPORT == "Somewhat important", "Yes")
+religion$RELIGION_IMPORT <- replace(religion$RELIGION_IMPORT, religion$RELIGION_IMPORT == "Not too important", "No")
+religion$RELIGION_IMPORT <- replace(religion$RELIGION_IMPORT, religion$RELIGION_IMPORT == "Not at all important", "No")
+religion$RELIGION_IMPORT <- replace(religion$RELIGION_IMPORT, religion$RELIGION_IMPORT == "Dont know (DO NOT READ)", "Neutral")
+religion$RELIGION_IMPORT <- replace(religion$RELIGION_IMPORT, religion$RELIGION_IMPORT == "Refused (DO NOT READ)", "Neutral")
+
+new_df <- pivot_wider(religion, id_cols=c(country, RELIGION_IMPORT), names_from = RELIGION_IMPORT, values_from = weighted_estimate, values_fn = sum)
+
+new_df <- new_df %>% pivot_longer(
+  cols = c("Yes", "No", "Neutral"),
+  names_to = "RELIGION_IMPORT",
+  names_prefix = "",
+  values_to = "weighted_estimate",
+  values_drop_na = TRUE
+)
+
+new_df2 <- new_df%>%
   group_by(country) %>%
   summarise(weighted_estimate=max(weighted_estimate))
 
 ### merge the two datasets with country as unique identifier
-religion<- merge (religion, new_df)
-religion <- religion[,-c(2,3,5,6)]
+religion<- merge (new_df, new_df2)
+religion <- religion[,-c(2)]
 
 #survey questions joined
 survey_joined <- left_join(gender_pivot, lgbtqi, by= "country")
@@ -164,8 +183,8 @@ clean_country <- data.frame(lapply(clean_country, function(x) {
 
 
 
-#-----STEP 6: PREPARE HOFSTEDE DATA                                        ####
-#import the data
+#-----STEP 5: PREPARE HOFSTEDE DATA                                        ####
+#import the happiness data
 hofstede <- read.csv('hofstedes culture dimensions.csv', sep =";", stringsAsFactors = FALSE)
 
 #convert country names to match for join
@@ -197,18 +216,20 @@ hofstede$country <- str_replace(hofstede$country
 hofstede <- hofstede[,c(2:8)]
 
 
-#-----STEP 7: MERGE ALL DATA                                               ####
+#-----STEP 6: MERGE ALL DATA                                               ####
 #join country_data with tmdb
 tmdbjoined <- left_join(tmdb, clean_country
                         , by= c("production_countries.name" = "country"))
 
 #join country_data with tmdb
+tmdbjoined <- inner_join(tmdbjoined, hofstede
+                         , by= c("production_countries.name" = "country"))
+
+
+#join country_data with tmdb
 tmdbjoined <- inner_join(tmdbjoined, survey_joined
                          , by= c("production_countries.name" = "country"))
 
-#join country_data with tmdb
-tmdbjoined <- inner_join(tmdbjoined, hofstede
-                         , by= c("production_countries.name" = "country"))
 
 
 
@@ -271,33 +292,37 @@ tmdbjoined$gender_N <- NULL
 tmdbjoined$gender_Y <- NULL
 tmdbjoined$total_survey <- NULL
 
+
 #use log transpormation on the new gender response, this overcomes issues with 
 #outliers in later testing
-tmdbjoined$extrapolated_genderY <- log(tmdbjoined$extrapolated_genderY)
+tmdbjoined_log <- tmdbjoined
+tmdbjoined_log$extrapolated_genderY <- log(tmdbjoined$extrapolated_genderY)
 
 
 #-----STEP 9: CHECK MODEL ASSUMPTIONS                                      ####
 
 #generate the model
-model_glm_4 <- glm(cbind(maturecontent_sum, notmature_sum)~ 
+model_glm_3 <- glm(cbind(maturecontent_sum, notmature_sum)~ 
                      income_level
                    + HOMOSEXUALITY 
                    + RELIGION_IMPORT
                    + extrapolated_genderY
                    + pdi                                        
-                   #+ idv                                        
-                   #+ mas                                       
-                   #+ uai                                        
+                   + idv                                        
+                   + mas                                       
+                   + uai                                        
                    + ltowvs                                     
                    + ivr
                    + budget_mean 
-                   #+ SP.POP.TOTL # country population                             
-                   ,family=binomial, data=tmdbjoined)
+                   ,family=binomial, data=tmdbjoined_log)
 
 
-summary(model_glm_4)
+summary(model_glm_3)
+
+anova(model_glm_3, model_glm_4, test = "Chisq")
 
 plot(model_glm_4, pages =1, all.terms = TRUE, pch = 1)
+
 
 # Predict the probability (p) of mature films production
 tmdbjoined$probabilities <- predict(model_glm_4, tmdbjoined, type = "response") ##34 values
@@ -340,13 +365,13 @@ cor(multico[,c("pdi"
   , "extrapolated_genderY"
   )])
 
-multico1<- lm(pdi ~ #idv 
-             #+ mas 
-             #+ uai 
+multico1<- lm(pdi ~ 
+             # idv 
+             + mas 
+             + uai 
              + ltowvs 
              + ivr 
              + budget_mean
-             #+ SP.POP.TOTL #- remove, basis for next variable
              + extrapolated_genderY
              + RELIGION_IMPORT
              + income_level
@@ -355,6 +380,7 @@ multico1<- lm(pdi ~ #idv
 
 summary(multico1)
 ols_coll_diag(multico1)
+
 
 # plot results
 if (require("see")) {
@@ -366,7 +392,7 @@ if (require("see")) {
 #### ###Influential Values
 #To check for the most extreme values in the data by visualizing the Cooks distance values. 
 #To check for 3 largest values;
-plot(model_glm_4, which = 4, id.n = 3)
+plot(model_glm_4, which = 4, id.n = 10)
 
 #The following R code computes the standardized residuals .std.resid and the Cooks distance .cooksd using the R function augment()
 # Extract model results
@@ -394,7 +420,7 @@ ggplot(model.data, aes(index, .std.resid)) +
   geom_hline(yintercept=-2, linetype="dashed", color="red", size=.5)
 
 # Remove Japan & South Korea
-tmdbjoined_nooutliers <- tmdbjoined[-c(15,27),]
+tmdbjoined_nooutliers <- tmdbjoined[-c(15),]
 
 #-----STEP 10: FINAL MODEL                                                 ####
 
@@ -408,27 +434,7 @@ model_glm_5 <- glm(cbind(maturecontent_sum, notmature_sum)~
                    + ltowvs                                     
                    + ivr
                    + budget_mean 
-                   ,family=binomial, data=tmdbjoined)
+                   ,family=binomial, data=tmdbjoined_nooutliers)
 
 
 summary(model_glm_5)
-coef(model_glm_5)
-
-
-#-----STEP 11: INTERPRET                                                 ####
-
-#install.packages("DescTools")
-#install.packages("manipulate")
-library(DescTools)
-library(manipulate)
-
-confint(model_glm_5)
-exp(coef(model_glm_5))
-exp(cbind(OR=coef(model_glm_5),confint.default(model_glm_5)))
-
-#generate an intercept only model
-tmdbnull <- tmdbjoined[-c(13,21,27,32),]
-model_5null <- glm(cbind(maturecontent_sum, notmature_sum)~1,
-                   family=binomial, data=tmdbnull)
-
-anova(model_5null, model_glm_5, test= "LRT")
