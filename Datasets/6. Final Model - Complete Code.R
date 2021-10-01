@@ -432,3 +432,6 @@ model_5null <- glm(cbind(maturecontent_sum, notmature_sum)~1,
                    family=binomial, data=tmdbnull)
 
 anova(model_5null, model_glm_5, test= "LRT")
+
+# To check for variable importance 
+caret::varImp(model_glm_5)
