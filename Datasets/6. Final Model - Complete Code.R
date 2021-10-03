@@ -17,7 +17,8 @@ library(mgcv)
 #install.packages("olsrr")
 library(olsrr)
 library(performance)
-
+library(leaflet)
+library(rgdal)
 
 
 #-----STEP 2: PREPARE TMDB DATA                                            ####
@@ -213,11 +214,6 @@ tmdbjoined <- inner_join(tmdbjoined, survey_joined
 #join country_data with tmdb
 tmdbjoined <- inner_join(tmdbjoined, hofstede
                          , by= c("production_countries.name" = "country"))
-
-
-
-
-
 
 
 
@@ -634,14 +630,207 @@ ggsave("RELIGION_IMPORT", plot=figure,device="jpeg",dpi=700)
 
 
 
+#Choropleth map 
+#Load World Map
+world_spdf <- readOGR( 
+  "world_shape_file" , 
+  layer="TM_WORLD_BORDERS_SIMPL-0.3",
+  verbose=FALSE
+)
+
+#PREPARE HOFSTEDE DATA
+#import the HOFSTEDE data
+hofstede <- read.csv('hofstedes culture dimensions.csv', sep =";", stringsAsFactors = FALSE)
+
+#convert ctr names to match for join
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "ALG", "DZA")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "AFE", "KEN")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "AUL", "AUS")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "BAN", "BGD")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "BOS", "BIH")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "BUL", "BGR")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "BUF", "BFA")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "CHI", "CHN")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "COS", "CRI")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "CRO", "HRV")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "ECA", "ECU")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "DEN", "DNK")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "ARA", "LBN")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "ECA", "ECU")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "SLV", "SVN")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "SAL", "SLV")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "SLK", "SVK")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "GER", "DEU")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "GRE", "GRC")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "GUA", "GTM")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "HOK", "HKG")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "ICE", "ISL")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "IDO", "IDN")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "IRA", "IRN")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "IRE", "IRL")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "KYR", "KGZ")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "LAT", "LVA")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "LIT", "LTU")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "MAL", "MYS")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "MOL", "MDA")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "MOR", "MAR")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "NET", "NLD")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "NIG", "NGA")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "PHI", "PHL")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "POR", "PRT")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "PUE", "PRI")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "ROM", "ROU")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "SER", "SRB")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "SIN", "SGP")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "SAF", "ZAF")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "SPA", "ESP")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "SWI", "CHE")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "TAI", "TWN")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "TAN", "TZA")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "TRI", "TTO")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "URU", "URY")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "VIE", "VNM")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "ZAM", "ZMB")
+hofstede$ctr <- str_replace(hofstede$ctr
+                            , "ZIM", "ZWE")
+
+hofstede <- hofstede[,c(1:8)]
+
+# Tidy into data frame
+df <- hofstede %>% select(1,3,7, 8)                   # drops extra columns
+names(df) <- c("ISO3", "pdi", "ltowvs", "ivr")  # rename columns
+df <- df %>% drop_na("pdi", "ltowvs", "ivr")                     # drop additional invalid rows
 
 
+#merge csv with shapefile
+x <- merge(world_spdf, df, by ="ISO3", type = "inner")
 
+#dplyr function to remove the NAs
+x <- x[!is.na(x@data$pdi), ]  
+x <- x[!is.na(x@data$ltowvs), ] 
+x <- x[!is.na(x@data$ivr), ]  
 
+# Create a color palette for the map:
+mypalette <- colorNumeric( palette="viridis", domain=x@data$pdi, na.color="transparent")
 
+# Create a color palette with handmade bins.--------------------------------------------------------
+library(RColorBrewer)
+mybins <- c(0,20,40,60,80,100,Inf)
+mypalette <- colorBin( palette="YlOrBr", domain=x@data$pdi, na.color="transparent", bins=mybins)
 
+# Prepare the text for tooltips:
+mytext <- paste(
+  "Country: ", x@data$NAME,"<br/>", 
+  "Power distance: ", x@data$pdi, "<br/>", 
+  "Long-term orientation: ", x@data$ltowvs, "<br/>", 
+  "Indulgence: ", x@data$ivr, 
+  sep="") %>%
+  lapply(htmltools::HTML)
 
+# Final Map- pdi
+leaflet(x) %>% 
+  addTiles()  %>% 
+  setView( lat=10, lng=0 , zoom=2) %>%
+  addPolygons( 
+    fillColor = ~mypalette(pdi), 
+    stroke=TRUE, 
+    fillOpacity = 0.9, 
+    color="white", 
+    weight=0.3,
+    label = mytext,
+    labelOptions = labelOptions( 
+      style = list("font-weight" = "normal", padding = "3px 8px"), 
+      textsize = "13px", 
+      direction = "auto"
+    )
+  ) %>%
+  addLegend( pal=mypalette, values=~pdi, opacity=0.9, title = "Power Distance", position = "bottomleft" ) 
 
+# Final Map- ltowvs
+leaflet(x) %>% 
+  addTiles()  %>% 
+  setView( lat=10, lng=0 , zoom=2) %>%
+  addPolygons( 
+    fillColor = ~mypalette(ltowvs), 
+    stroke=TRUE, 
+    fillOpacity = 0.9, 
+    color="white", 
+    weight=0.3,
+    label = mytext,
+    labelOptions = labelOptions( 
+      style = list("font-weight" = "normal", padding = "3px 8px"), 
+      textsize = "13px", 
+      direction = "auto"
+    )
+  ) %>%
+  addLegend( pal=mypalette, values=~ltowvs, opacity=0.9, title = "Long-term orientation", position = "bottomleft" ) 
+
+# Final Map- ivr
+leaflet(x) %>% 
+  addTiles()  %>% 
+  setView( lat=10, lng=0 , zoom=2) %>%
+  addPolygons( 
+    fillColor = ~mypalette(ivr), 
+    stroke=TRUE, 
+    fillOpacity = 0.9, 
+    color="white", 
+    weight=0.3,
+    label = mytext,
+    labelOptions = labelOptions( 
+      style = list("font-weight" = "normal", padding = "3px 8px"), 
+      textsize = "13px", 
+      direction = "auto"
+    )
+  ) %>%
+  addLegend( pal=mypalette, values=~ivr, opacity=0.9, title = "Indulgence", position = "bottomleft" ) 
 
 
 
