@@ -140,6 +140,429 @@ survey_joined$country <- str_replace(survey_joined$country
 
 
 
+# Create Chart for Culture Data 
+
+
+# Homosexuality
+
+library(tidyverse)
+library(ggthemes)
+library(sqldf)
+library(lattice)
+library(gridExtra)
+library(cowplot)
+library(ggpubr)
+
+
+
+homo <- read_csv("HOMOSEXUALITY.csv")
+
+homo_clean <- homo %>%
+    select("country", "HOMOSEXUALITY", "weighted_estimate") %>%
+    mutate(HOMOSEXUALITY=if_else(HOMOSEXUALITY=="Homosexuality should be accepted by society", "Yes", "No")) %>%
+    mutate(response=case_when(HOMOSEXUALITY=="No" ~ -1*weighted_estimate, HOMOSEXUALITY=="Yes" ~ weighted_estimate)) %>%
+    group_by(country,HOMOSEXUALITY)
+
+
+country <- 
+    read_csv("tmdbjoined.csv") %>%
+    select("production_countries.name", "income_level") %>%
+    mutate(country= case_when(production_countries.name =="United States of America" ~ "United States",
+                              production_countries.name !="United States of America"~production_countries.name)) %>%
+    unique() %>%
+    filter(income_level !="NA")
+
+
+
+
+homo_combined <- sqldf("SELECT 
+                       country, HOMOSEXUALITY, response, income_level
+                       FROM homo_clean
+                       LEFT JOIN country USING(country)")
+
+
+homo_combined_HI <- homo_combined %>%
+    filter(income_level=='High income')
+
+homo_combined_UMI <- homo_combined %>%
+    filter(income_level=='Upper middle income')
+
+homo_combined_LMI <- homo_combined %>%
+    filter(income_level=='Lower middle income')
+
+
+# X Axis Breaks and Labels 
+brks <- seq(-1, 1, 0.2)
+lbls = paste0(as.character(100*(c(seq(1, 0, -0.2), seq(0.1, 1, 0.2)))), "%")
+
+
+
+
+
+#Plot - High Income
+Plot_HI <-
+ggplot(homo_combined_HI , aes(x = reorder(country, response), y = response, fill = HOMOSEXUALITY, group=income_level)) +   # Fill column
+    geom_bar(stat = "identity", width = .6) +   # draw the bars
+    scale_y_continuous(breaks = brks,   # Breaks
+                       labels = lbls) + # Labels
+    coord_flip() +  # Flip axes
+    labs(title="Homosexuality should be accepted by society?\n \n High Income Countries",
+         y="Response", x="Country") +
+    theme_tufte() +  # Tufte theme from ggfortify
+    theme(plot.title = element_text(hjust = .5, color="#F7F5E6"), 
+          axis.ticks = element_blank(),
+          plot.background = element_rect(fill="#0D2A47"),
+          axis.title.x =element_blank(),
+          axis.title.y = element_blank(),
+          axis.text = element_text(colour = "#F7F5E6"),
+          legend.text=element_text(colour = "#F7F5E6"),
+          legend.position="top",
+          legend.title=element_blank(),
+          axis.text.x=element_blank()) +   # Centre plot title
+    scale_fill_manual("HOMOSEXUALITY", values = c("Yes" = "#F7F5E6", "No" = "#E15759")) 
+
+
+
+
+
+
+#Plot - Upper middle income
+
+Plot_UMI <-
+ggplot(homo_combined_UMI, aes(x = reorder(country, response), y = response, fill = HOMOSEXUALITY, group=income_level)) +   # Fill column
+    geom_bar(stat = "identity", width = .6) +   # draw the bars
+    scale_y_continuous(breaks = brks,   # Breaks
+                       labels = lbls) + # Labels
+    coord_flip() +  # Flip axes
+    labs(title="\n Upper Middle Income Countries",
+         y="Response", x="Country") +
+    theme_tufte() +  # Tufte theme from ggfortify
+    theme(plot.title = element_text(hjust = .5, color="#F7F5E6"), 
+          axis.ticks = element_blank(),
+          plot.background = element_rect(fill="#0D2A47"),
+          axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.text.x = element_blank(),
+          axis.text.y = element_text(colour = "#F7F5E6"),
+          legend.title = element_blank(),
+          legend.text=element_text(colour = "#F7F5E6"),
+          legend.position="none") +  # Centre plot title
+    scale_fill_manual("HOMOSEXUALITY", values = c("Yes" = "#F7F5E6", "No" = "#E15759")) 
+
+
+
+#Plot - Lower middle income
+Plot_LMI <-
+ggplot(homo_combined_LMI, aes(x = reorder(country, response), y = response, fill = HOMOSEXUALITY, group=income_level)) +   # Fill column
+    geom_bar(stat = "identity", width = .6) +   # draw the bars
+    scale_y_continuous(breaks = brks,   # Breaks
+                       labels = lbls) + # Labels
+    coord_flip() +  # Flip axes
+    labs(title="\n Lower Middle Income Countries",
+         y="Response", x="Country") +
+    theme_tufte() +  # Tufte theme from ggfortify
+    theme(plot.title = element_text(hjust = .5, color="#F7F5E6"), 
+          axis.ticks = element_blank(),
+          plot.background = element_rect(fill="#0D2A47"),
+          axis.title.x = element_text(colour = "#F7F5E6"),
+          axis.title.y = element_blank(),
+          axis.text.x = element_text(colour = "#F7F5E6"),
+          axis.text.y = element_text(colour = "#F7F5E6"),
+          legend.position="none",
+          plot.margin =margin(0,0.5,0,0.5, "cm")) +  # Centre plot title
+    scale_fill_manual("HOMOSEXUALITY", values = c("Yes" = "#F7F5E6", "No" = "#E15759")) 
+
+
+
+figure <- ggarrange(Plot_HI, Plot_UMI,Plot_LMI + font("x.text", size = 10),
+                    ncol = 1, nrow = 3, heights=c(2,1,1)) 
+
+figure
+
+
+ggsave("Homosexuality", plot=figure,device="jpeg",dpi=700)
+
+
+
+
+## Gender
+
+
+gender <- read_csv("GENDER_EQUALITY.csv")
+
+gender_clean <- gender %>%
+    select("country", "GENDER_EQUALITY", "weighted_estimate") %>%
+    mutate(GENDER_EQUALITY=if_else(GENDER_EQUALITY==("Very important" |"Somewhat important"), "Yes", "No")) %>%
+    mutate(response=case_when(GENDER_EQUALITY=="No" ~ -1*weighted_estimate, GENDER_EQUALITY=="Yes" ~ weighted_estimate)) %>%
+    group_by(country,GENDER_EQUALITY)
+
+
+country <- 
+    read_csv("tmdbjoined.csv") %>%
+    select("production_countries.name", "income_level") %>%
+    mutate(country= case_when(production_countries.name =="United States of America" ~ "United States",
+                              production_countries.name !="United States of America"~production_countries.name)) %>%
+    unique() %>%
+    filter(income_level !="NA")
+
+
+
+
+gender_combined <- sqldf("SELECT 
+                       country, GENDER_EQUALITY, response, income_level
+                       FROM gender_clean
+                       LEFT JOIN country USING(country)")
+
+
+gender_combined_HI <- gender_combined %>%
+    filter(income_level=='High income')
+
+gender_combined_UMI <- gender_combined %>%
+    filter(income_level=='Upper middle income')
+
+gender_combined_LMI <- gender_combined %>%
+    filter(income_level=='Lower middle income')
+
+
+# X Axis Breaks and Labels 
+brks <- seq(-1, 1, 0.2)
+lbls = paste0(as.character(100*(c(seq(1, 0, -0.2), seq(0.1, 1, 0.2)))), "%")
+
+
+
+
+
+#Plot - High Income
+Plot_Gender_HI <-
+    ggplot(gender_combined_HI , aes(x = reorder(country, response), y = response, fill = GENDER_EQUALITY, group=income_level)) +   # Fill column
+    geom_bar(stat = "identity", width = .6) +   # draw the bars
+    scale_y_continuous(breaks = brks,   # Breaks
+                       labels = lbls) + # Labels
+    coord_flip() +  # Flip axes
+    labs(title="Is Gender Equality Important?\n \n High Income Countries",
+         y="Response", x="Country") +
+    theme_tufte() +  # Tufte theme from ggfortify
+    theme(plot.title = element_text(hjust = .5, color="#F7F5E6"), 
+          axis.ticks = element_blank(),
+          plot.background = element_rect(fill="#0D2A47"),
+          axis.title.x =element_blank(),
+          axis.title.y = element_blank(),
+          axis.text = element_text(colour = "#F7F5E6"),
+          legend.text=element_text(colour = "#F7F5E6"),
+          legend.position="top",
+          legend.title=element_blank(),
+          axis.text.x=element_blank()) +   # Centre plot title
+    scale_fill_manual("GENDER_EQUALITY", values = c("Yes" = "#F7F5E6", "No" = "#E15759")) 
+
+
+
+
+
+
+#Plot - Upper middle income
+
+Plot_Gender_UMI <-
+    ggplot(homo_combined_UMI, aes(x = reorder(country, response), y = response, fill = GENDER_EQUALITY, group=income_level)) +   # Fill column
+    geom_bar(stat = "identity", width = .6) +   # draw the bars
+    scale_y_continuous(breaks = brks,   # Breaks
+                       labels = lbls) + # Labels
+    coord_flip() +  # Flip axes
+    labs(title="\n Upper Middle Income Countries",
+         y="Response", x="Country") +
+    theme_tufte() +  # Tufte theme from ggfortify
+    theme(plot.title = element_text(hjust = .5, color="#F7F5E6"), 
+          axis.ticks = element_blank(),
+          plot.background = element_rect(fill="#0D2A47"),
+          axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.text.x = element_blank(),
+          axis.text.y = element_text(colour = "#F7F5E6"),
+          legend.title = element_blank(),
+          legend.text=element_text(colour = "#F7F5E6"),
+          legend.position="none") +  # Centre plot title
+    scale_fill_manual("GENDER_EQUALITY", values = c("Yes" = "#F7F5E6", "No" = "#E15759")) 
+
+
+
+#Plot - Lower middle income
+Plot_Gender_LMI <-
+    ggplot(homo_combined_LMI, aes(x = reorder(country, response), y = response, fill = GENDER_EQUALITY, group=income_level)) +   # Fill column
+    geom_bar(stat = "identity", width = .6) +   # draw the bars
+    scale_y_continuous(breaks = brks,   # Breaks
+                       labels = lbls) + # Labels
+    coord_flip() +  # Flip axes
+    labs(title="\n Lower Middle Income Countries",
+         y="Response", x="Country") +
+    theme_tufte() +  # Tufte theme from ggfortify
+    theme(plot.title = element_text(hjust = .5, color="#F7F5E6"), 
+          axis.ticks = element_blank(),
+          plot.background = element_rect(fill="#0D2A47"),
+          axis.title.x = element_text(colour = "#F7F5E6"),
+          axis.title.y = element_blank(),
+          axis.text.x = element_text(colour = "#F7F5E6"),
+          axis.text.y = element_text(colour = "#F7F5E6"),
+          legend.position="none",
+          plot.margin =margin(0,0.5,0,0.5, "cm")) +  # Centre plot title
+    scale_fill_manual("GENDER_EQUALITY", values = c("Yes" = "#F7F5E6", "No" = "#E15759")) 
+
+
+
+figure_gender <- ggarrange(Plot__Gender_HI, Plot__Gender_UMI,Plot_Gender_LMI + font("x.text", size = 10),
+                    ncol = 1, nrow = 3, heights=c(2,1,1)) 
+
+
+
+
+ggsave("GENDER_EQUALITY", plot=figure,device="jpeg",dpi=700)
+
+
+
+
+
+
+# Religion
+
+
+religion <- read_csv("RELIGION_IMPORT.csv")
+
+religion_clean <- religion %>%
+    select("country", "RELIGION_IMPORT.csv", "weighted_estimate") %>%
+    mutate(RELIGION_IMPORT=if_else(RELIGION_IMPORT==("Very important" |"Somewhat important"), "Yes", "No")) %>%
+    mutate(response=case_when(RELIGION_IMPORT=="No" ~ -1*weighted_estimate, RELIGION_IMPORT=="Yes" ~ weighted_estimate)) %>%
+    group_by(country,RELIGION_IMPORT)
+
+
+country <- 
+    read_csv("tmdbjoined.csv") %>%
+    select("production_countries.name", "income_level") %>%
+    mutate(country= case_when(production_countries.name =="United States of America" ~ "United States",
+                              production_countries.name !="United States of America"~production_countries.name)) %>%
+    unique() %>%
+    filter(income_level !="NA")
+
+
+
+
+religion_combined <- sqldf("SELECT 
+                       country, RELIGION_IMPORT, response, income_level
+                       FROM gender_clean
+                       LEFT JOIN country USING(country)")
+
+
+religion_combined_HI <- religion_combined %>%
+    filter(income_level=='High income')
+
+religion_combined_UMI <- religion_combined %>%
+    filter(income_level=='Upper middle income')
+
+religion_combined_LMI <- religion_combined %>%
+    filter(income_level=='Lower middle income')
+
+
+# X Axis Breaks and Labels 
+brks <- seq(-1, 1, 0.2)
+lbls = paste0(as.character(100*(c(seq(1, 0, -0.2), seq(0.1, 1, 0.2)))), "%")
+
+
+
+
+
+#Plot - High Income
+Plot_Religion_HI <-
+    ggplot(religion_combined_HI , aes(x = reorder(country, response), y = response, fill = RELIGION_IMPORT, group=income_level)) +   # Fill column
+    geom_bar(stat = "identity", width = .6) +   # draw the bars
+    scale_y_continuous(breaks = brks,   # Breaks
+                       labels = lbls) + # Labels
+    coord_flip() +  # Flip axes
+    labs(title="Is Religion Important To You?\n \n High Income Countries",
+         y="Response", x="Country") +
+    theme_tufte() +  # Tufte theme from ggfortify
+    theme(plot.title = element_text(hjust = .5, color="#F7F5E6"), 
+          axis.ticks = element_blank(),
+          plot.background = element_rect(fill="#0D2A47"),
+          axis.title.x =element_blank(),
+          axis.title.y = element_blank(),
+          axis.text = element_text(colour = "#F7F5E6"),
+          legend.text=element_text(colour = "#F7F5E6"),
+          legend.position="top",
+          legend.title=element_blank(),
+          axis.text.x=element_blank()) +   # Centre plot title
+    scale_fill_manual("RELIGION_IMPORT", values = c("Yes" = "#F7F5E6", "No" = "#E15759")) 
+
+
+
+
+
+
+#Plot - Upper middle income
+
+Plot_Religion_UMI <-
+    ggplot(religion_combined_UMI, aes(x = reorder(country, response), y = response, fill = RELIGION_IMPORT, group=income_level)) +   # Fill column
+    geom_bar(stat = "identity", width = .6) +   # draw the bars
+    scale_y_continuous(breaks = brks,   # Breaks
+                       labels = lbls) + # Labels
+    coord_flip() +  # Flip axes
+    labs(title="\n Upper Middle Income Countries",
+         y="Response", x="Country") +
+    theme_tufte() +  # Tufte theme from ggfortify
+    theme(plot.title = element_text(hjust = .5, color="#F7F5E6"), 
+          axis.ticks = element_blank(),
+          plot.background = element_rect(fill="#0D2A47"),
+          axis.title.x = element_blank(),
+          axis.title.y = element_blank(),
+          axis.text.x = element_blank(),
+          axis.text.y = element_text(colour = "#F7F5E6"),
+          legend.title = element_blank(),
+          legend.text=element_text(colour = "#F7F5E6"),
+          legend.position="none") +  # Centre plot title
+    scale_fill_manual("RELIGION_IMPORT", values = c("Yes" = "#F7F5E6", "No" = "#E15759")) 
+
+
+
+#Plot - Lower middle income
+Plot_ReligionLMI <-
+    ggplot(religion_combined_LMI, aes(x = reorder(country, response), y = response, fill = RELIGION_IMPORT, group=income_level)) +   # Fill column
+    geom_bar(stat = "identity", width = .6) +   # draw the bars
+    scale_y_continuous(breaks = brks,   # Breaks
+                       labels = lbls) + # Labels
+    coord_flip() +  # Flip axes
+    labs(title="\n Lower Middle Income Countries",
+         y="Response", x="Country") +
+    theme_tufte() +  # Tufte theme from ggfortify
+    theme(plot.title = element_text(hjust = .5, color="#F7F5E6"), 
+          axis.ticks = element_blank(),
+          plot.background = element_rect(fill="#0D2A47"),
+          axis.title.x = element_text(colour = "#F7F5E6"),
+          axis.title.y = element_blank(),
+          axis.text.x = element_text(colour = "#F7F5E6"),
+          axis.text.y = element_text(colour = "#F7F5E6"),
+          legend.position="none",
+          plot.margin =margin(0,0.5,0,0.5, "cm")) +  # Centre plot title
+    scale_fill_manual("RELIGION_IMPORT", values = c("Yes" = "#F7F5E6", "No" = "#E15759")) 
+
+
+
+figure_gender <- ggarrange(Plot_Religion_HI, Plot_Religion_UMI,Plot_Religion_LMI + font("x.text", size = 10),
+                           ncol = 1, nrow = 3, heights=c(2,1,1)) 
+
+
+
+
+ggsave("RELIGION_IMPORT", plot=figure,device="jpeg",dpi=700)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #-----STEP 4: PREPARE COUNTRY DATA                                        ####
 
 #Code to get countries data
