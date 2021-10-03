@@ -140,6 +140,88 @@ survey_joined$country <- str_replace(survey_joined$country
 
 
 
+
+
+
+
+#-----STEP 4: PREPARE COUNTRY DATA                                        ####
+
+#Code to get countries data
+income_level <- select(wb_countries(), country, income_level)
+population <- wb_data("SP.POP.TOTL", start_date = 2020, end_date = 2021)
+population <- population %>% select (country, SP.POP.TOTL)
+Country_Data <- left_join(income_level, population)
+
+#convert country names to match for join
+clean_country <- data.frame(lapply(Country_Data, function(x) {
+  gsub("United States", "United States of America", x)
+}))
+clean_country <- data.frame(lapply(clean_country, function(x) {
+  gsub("Slovak Republic", "Slovakia", x)
+}))
+clean_country <- data.frame(lapply(clean_country, function(x) {
+  gsub("Korea, Rep.", "South Korea", x)
+}))
+clean_country <- data.frame(lapply(clean_country, function(x) {
+  gsub("Russian Federation", "Russia", x)
+}))
+
+
+
+#-----STEP 6: PREPARE HOFSTEDE DATA                                        ####
+#import the data
+hofstede <- read.csv('hofstedes culture dimensions.csv', sep =";", stringsAsFactors = FALSE)
+
+#convert country names to match for join
+hofstede$country <- str_replace(hofstede$country
+                                         , "U.S.A."
+                                         , "United States of America")
+hofstede$country <- str_replace(hofstede$country
+                                , "Africa East"
+                                , "Kenya")
+hofstede$country <- str_replace(hofstede$country
+                                , "Africa West"
+                                , "Tunisia")
+hofstede$country <- str_replace(hofstede$country
+                                , "Slovak Rep"
+                                , "Slovakia")
+hofstede$country <- str_replace(hofstede$country
+                                , "Czech Rep"
+                                , "Czech Republic")
+hofstede$country <- str_replace(hofstede$country
+                                , "Korea South"
+                                , "South Korea")
+hofstede$country <- str_replace(hofstede$country
+                                , "Arab countries"
+                                , "Lebanon")
+hofstede$country <- str_replace(hofstede$country
+                                , "Great Britain"
+                                , "United Kingdom")
+
+hofstede <- hofstede[,c(2:8)]
+
+
+#-----STEP 7: MERGE ALL DATA                                               ####
+#join country_data with tmdb
+tmdbjoined <- left_join(tmdb, clean_country
+                        , by= c("production_countries.name" = "country"))
+
+#join country_data with tmdb
+tmdbjoined <- inner_join(tmdbjoined, survey_joined
+                         , by= c("production_countries.name" = "country"))
+
+#join country_data with tmdb
+tmdbjoined <- inner_join(tmdbjoined, hofstede
+                         , by= c("production_countries.name" = "country"))
+
+
+
+
+
+
+
+
+
 # Create Chart for Culture Data 
 
 
@@ -562,76 +644,6 @@ ggsave("RELIGION_IMPORT", plot=figure,device="jpeg",dpi=700)
 
 
 
-
-#-----STEP 4: PREPARE COUNTRY DATA                                        ####
-
-#Code to get countries data
-income_level <- select(wb_countries(), country, income_level)
-population <- wb_data("SP.POP.TOTL", start_date = 2020, end_date = 2021)
-population <- population %>% select (country, SP.POP.TOTL)
-Country_Data <- left_join(income_level, population)
-
-#convert country names to match for join
-clean_country <- data.frame(lapply(Country_Data, function(x) {
-  gsub("United States", "United States of America", x)
-}))
-clean_country <- data.frame(lapply(clean_country, function(x) {
-  gsub("Slovak Republic", "Slovakia", x)
-}))
-clean_country <- data.frame(lapply(clean_country, function(x) {
-  gsub("Korea, Rep.", "South Korea", x)
-}))
-clean_country <- data.frame(lapply(clean_country, function(x) {
-  gsub("Russian Federation", "Russia", x)
-}))
-
-
-
-#-----STEP 6: PREPARE HOFSTEDE DATA                                        ####
-#import the data
-hofstede <- read.csv('hofstedes culture dimensions.csv', sep =";", stringsAsFactors = FALSE)
-
-#convert country names to match for join
-hofstede$country <- str_replace(hofstede$country
-                                         , "U.S.A."
-                                         , "United States of America")
-hofstede$country <- str_replace(hofstede$country
-                                , "Africa East"
-                                , "Kenya")
-hofstede$country <- str_replace(hofstede$country
-                                , "Africa West"
-                                , "Tunisia")
-hofstede$country <- str_replace(hofstede$country
-                                , "Slovak Rep"
-                                , "Slovakia")
-hofstede$country <- str_replace(hofstede$country
-                                , "Czech Rep"
-                                , "Czech Republic")
-hofstede$country <- str_replace(hofstede$country
-                                , "Korea South"
-                                , "South Korea")
-hofstede$country <- str_replace(hofstede$country
-                                , "Arab countries"
-                                , "Lebanon")
-hofstede$country <- str_replace(hofstede$country
-                                , "Great Britain"
-                                , "United Kingdom")
-
-hofstede <- hofstede[,c(2:8)]
-
-
-#-----STEP 7: MERGE ALL DATA                                               ####
-#join country_data with tmdb
-tmdbjoined <- left_join(tmdb, clean_country
-                        , by= c("production_countries.name" = "country"))
-
-#join country_data with tmdb
-tmdbjoined <- inner_join(tmdbjoined, survey_joined
-                         , by= c("production_countries.name" = "country"))
-
-#join country_data with tmdb
-tmdbjoined <- inner_join(tmdbjoined, hofstede
-                         , by= c("production_countries.name" = "country"))
 
 
 
